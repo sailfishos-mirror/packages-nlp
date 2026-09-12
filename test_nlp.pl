@@ -42,11 +42,15 @@
 :- autoload(library(porter_stem),
 	    [porter_stem/2,tokenize_atom/2,atom_to_stem_list/2]).
 :- autoload(library(snowball)).
+% Not autoload: the goal expansion of isub/4 must be in effect while the
+% tests below are compiled.
+:- use_module(library(isub), [isub/4]).
 
 test_nlp :-
     run_tests([ stem,
                 metaphone,
-                snowball
+                snowball,
+                isub
               ]).
 
 :- begin_tests(stem).
@@ -68,6 +72,31 @@ test(metaphone, [true(X=='ARLT')]) :-
     double_metaphone(world, X).
 
 :- end_tests(metaphone).
+
+
+:- begin_tests(isub).
+
+%  isub/4 is overloaded: the third argument is either the `Normalize`
+%  boolean or the similarity, in which case the fourth argument holds the
+%  options.  Both forms are goal expanded.  Compare each expanded call
+%  with the same call that cannot be expanded because its mode only
+%  becomes clear at runtime.  An error while expanding used to drop the
+%  clause holding the call.
+
+test(normalize, Expanded =:= Runtime) :-
+    isub(hello, hallo, false, Expanded),
+    normalize(Normalize),
+    isub(hello, hallo, Normalize, Runtime).
+
+test(options, Expanded =:= Runtime) :-
+    isub(hello, hallo, Expanded, [normalize(true)]),
+    options(Options),
+    isub(hello, hallo, Runtime, Options).
+
+normalize(false).
+options([normalize(true)]).
+
+:- end_tests(isub).
 
 
 :- begin_tests(snowball).

@@ -145,15 +145,21 @@ normalize_int(false,0x0).
 zero_one_range_int(true,0x1).
 zero_one_range_int(false,0x0).
 
+% Only expand if the mode of the call is clear from the goal itself.  An
+% error raised while expanding drops the clause holding the call, and
+% expanding options that are not ground would bind their variables.
+
 user:goal_expansion(isub(T1,T2,Normalize,D),
                     '$isub'(T1,T2,D,NumOpts,SubstringThreshold)) :-
    (   Normalize == true
    ->  NumOpts = 0x3, SubstringThreshold = 2
-   ;   Normalize == true
+   ;   Normalize == false
    ->  NumOpts = 0x1, SubstringThreshold = 2
    ).
 user:goal_expansion(isub(T1,T2,D,Options),
                     '$isub'(T1,T2,D,NumOpts,SubstringThreshold)) :-
+   is_list(Options),
+   ground(Options),
    isub_options(NumOpts,SubstringThreshold, Options).
 
 :- multifile sandbox:safe_primitive/1.
